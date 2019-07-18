@@ -32,6 +32,10 @@ import mozilla.lockbox.model.ItemDetailViewModel
 import mozilla.lockbox.presenter.ItemDetailPresenter
 import mozilla.lockbox.presenter.ItemDetailView
 import mozilla.lockbox.support.assertOnUiThread
+import android.animation.ObjectAnimator
+import android.R.id
+
+
 
 @ExperimentalCoroutinesApi
 class ItemDetailFragment : BackableFragment(), ItemDetailView {
@@ -106,9 +110,15 @@ class ItemDetailFragment : BackableFragment(), ItemDetailView {
         spinner.adapter = itemAdapter
 
         spinner.setPopupBackgroundResource(R.drawable.sort_menu_bg)
+
+        val menuView = spinner.adapter.getDropDownView(0, null, spinner) as TextView
         // added because different events can trigger onItemSelectedListener
         spinner.setOnTouchListener { _, _ ->
             userSelection = true
+            val anim2 = ObjectAnimator.ofFloat(menuView, "scaleY", 0.5f)
+            anim2.duration = 8000 // duration 3 seconds
+            anim2.start()
+
             false
         }
 

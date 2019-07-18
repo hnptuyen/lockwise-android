@@ -2,11 +2,13 @@ package mozilla.lockbox.adapter
 
 import android.content.Context
 import android.view.View
+import android.view.View.GONE
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import mozilla.lockbox.R
 import mozilla.lockbox.action.ItemDetailAction
+import mozilla.lockbox.log
 
 class ItemDetailAdapter(
     context: Context,
@@ -35,20 +37,35 @@ class ItemDetailAdapter(
         return label
     }
 
+    override fun isEnabled(position: Int): Boolean {
+        return position != 0
+    }
+
     override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
-        if (position == 0) {
-            return TextView(context)
-        } else {
-            val label = super.getDropDownView(position, convertView, parent) as TextView
+        if (position == 0 ) {
+            log.info("Header!")
 
-            label.setTextAppearance(R.style.TextAppearanceSortMenuItem)
-            val title = context.resources.getString(values[position].titleId)
-            label.text = title
-            label.background = context.resources.getDrawable(R.drawable.button_pressed_white, null)
-            val padding = label.resources.getDimensionPixelSize(R.dimen.sort_item_padding)
-            label.setPadding(padding, padding, padding, padding)
-
-            return label
+            val header = super.getView(position, convertView, parent) as TextView
+            header.height = 0
         }
+        val label = super.getDropDownView(position, convertView, parent) as TextView
+        val title = context.resources.getString(values[position].titleId)
+        if (title == "Delete") {
+            log.info("Delete!")
+            label.text = title
+        } else if (title == "Edit") {
+            log.info("Edit!")
+            label.text = title
+        } else {
+//            label.visibility = GONE
+        }
+
+        label.setTextAppearance(R.style.TextAppearanceSortMenuItem)
+
+        label.background = context.resources.getDrawable(R.drawable.button_pressed_white, null)
+        val padding = label.resources.getDimensionPixelSize(R.dimen.sort_item_padding)
+        label.setPadding(padding, padding, padding, padding)
+
+        return label
     }
 }
