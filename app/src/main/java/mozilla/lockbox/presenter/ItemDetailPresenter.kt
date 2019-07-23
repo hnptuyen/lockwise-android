@@ -6,6 +6,7 @@
 
 package mozilla.lockbox.presenter
 
+import android.view.MenuItem
 import androidx.annotation.StringRes
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers.mainThread
@@ -27,6 +28,10 @@ import mozilla.lockbox.model.ItemDetailViewModel
 import mozilla.lockbox.store.DataStore
 import mozilla.lockbox.store.ItemDetailStore
 import mozilla.lockbox.store.NetworkStore
+import android.R.menu
+import android.view.MenuInflater
+import android.view.View
+import android.widget.PopupMenu
 
 interface ItemDetailView {
     val usernameCopyClicks: Observable<Unit>
@@ -39,8 +44,7 @@ interface ItemDetailView {
     fun updateItem(item: ItemDetailViewModel)
     fun showToastNotification(@StringRes strId: Int)
     fun handleNetworkError(networkErrorVisibility: Boolean)
-    fun updateKebabSelection(item: ItemDetailAction.EditItemMenu)
-    val menuItemSelection: Observable<ItemDetailAction.EditItemMenu>
+//    val menuItemSelection: Observable<ItemDetailAction.EditItemMenu>
     //    val retryNetworkConnectionClicks: Observable<Unit>
 }
 
@@ -112,20 +116,47 @@ class ItemDetailPresenter(
             .subscribe { view.isPasswordVisible = it }
             .addTo(compositeDisposable)
 
-        view.menuItemSelection
-            .subscribe {
-                view.updateKebabSelection(it)
-                when (it.titleId) {
-                    R.string.edit -> dispatcher.dispatch(RouteAction.EditItemDetail(credentials!!.id))
-                    else -> dispatcher.dispatch(DialogAction.DeleteConfirmationDialog(credentials))
-                }
-            }
-            .addTo(compositeDisposable)
+//        view.kebabMenuClicks
+//            .subscribe(view::setupKebabMenu)
+//            .addTo(compositeDisposable)
+
+
+//        view.menuItemSelection
+//            .subscribe {
+//                view.updateKebabSelection(it)
+//                when (it.titleId) {
+//                    R.string.edit -> dispatcher.dispatch(RouteAction.EditItemDetail(credentials!!.id))
+//                    else -> dispatcher.dispatch(DialogAction.DeleteConfirmationDialog(credentials))
+//                }
+//            }
+//            .addTo(compositeDisposable)
 
 //        view.retryNetworkConnectionClicks.subscribe {
 //            dispatcher.dispatch(NetworkAction.CheckConnectivity)
 //        }?.addTo(compositeDisposable)
     }
+
+    fun showPopup(view: View) {
+        val popup = PopupMenu(view.context, view)
+        val inflater = popup.menuInflater
+        inflater.inflate(R.menu.item_detail_menu, popup.menu)
+        popup.show()
+    }
+
+    private fun onMenuItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.edit -> {
+                dispatcher.dispatch(RouteAction.EditItemDetail(credentials!!.id))
+                true
+            }
+            R.id.delete -> {
+                dispatcher.dispatch(DialogAction.DeleteConfirmationDialog(credentials))
+                true
+            }
+            else -> false
+        }
+    }
+
 
     private fun handleClicks(clicks: Observable<Unit>, withServerPassword: (ServerPassword) -> Unit) {
         clicks.subscribe {
