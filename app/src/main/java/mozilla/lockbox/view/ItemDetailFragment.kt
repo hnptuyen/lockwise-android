@@ -13,11 +13,11 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.view.ViewTreeObserver
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
@@ -28,35 +28,19 @@ import kotlinx.android.synthetic.main.fragment_item_detail.*
 import kotlinx.android.synthetic.main.fragment_item_detail.view.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import mozilla.lockbox.R
+import mozilla.lockbox.log
 import mozilla.lockbox.model.ItemDetailViewModel
 import mozilla.lockbox.presenter.ItemDetailPresenter
 import mozilla.lockbox.presenter.ItemDetailView
 import mozilla.lockbox.support.assertOnUiThread
 
-import android.view.ViewTreeObserver
-
-/**
- * A OnPreDrawListener implementation that will execute a callback once and then unsubscribe itself.
- * https://github.com/mozilla-mobile/focus-android/blob/master/app/src/main/java/org/mozilla/focus/utils/OneShotOnPreDrawListener.kt
- */
-class OneShotOnPreDrawListener<V : View> (
-    private val view: V,
-    private inline val onPreDraw: (view: V) -> Boolean
-) : ViewTreeObserver.OnPreDrawListener {
-
-    init {
-        view.viewTreeObserver.addOnPreDrawListener(this)
-    }
-
-    override fun onPreDraw(): Boolean {
-        view.viewTreeObserver.removeOnPreDrawListener(this)
-
-        return onPreDraw(view)
-    }
-}
-
 @ExperimentalCoroutinesApi
-class ItemDetailFragment : BackableFragment(), ItemDetailView, View.OnClickListener {
+class ItemDetailFragment
+    : BackableFragment(),
+    ItemDetailView,
+    PopupMenu.OnMenuItemClickListener,
+    PopupMenu.OnDismissListener
+{
 
     private var itemId: String? = null
     private var kebabMenu: ItemDetailOptionMenu? = null
@@ -70,8 +54,11 @@ class ItemDetailFragment : BackableFragment(), ItemDetailView, View.OnClickListe
             ItemDetailFragmentArgs.fromBundle(it).itemId
         }
 
+        this.setHasOptionsMenu(true)
         presenter = ItemDetailPresenter(this, itemId)
+
         val view = inflater.inflate(R.layout.fragment_item_detail, container, false)
+        showPopup(view)
 
         return view
     }
@@ -113,31 +100,74 @@ class ItemDetailFragment : BackableFragment(), ItemDetailView, View.OnClickListe
             updatePasswordVisibility(value)
         }
 
-    override fun onClick(view: View) {
-        when (view.id) {
-            R.id.kebabMenuButton -> showKebabMenu(view)
-            else -> throw IllegalStateException("View not handled on click: ${view.id}.")
-        }
-    }
+//    override fun onClick(view: View) {
+//        when (view.id) {
+//            R.id.kebabMenuButton -> showPopup(view)
+//            else -> throw IllegalStateException("View not handled on click: ${view.id}.")
+//        }
+//    }
 
-    private fun showKebabMenu(view: View) {
-        var kebabMenu: ItemDetailOptionMenu? = ItemDetailOptionMenu(view.context, this)
-        kebabMenu?.show(view)
-        kebabMenu?.dismissListener = {
-            kebabMenu = null
-        }
-    }
+    fun showPopup(view: View) {
+//        val popup = PopupMenu(context, view)
+//        val inflater: MenuInflater = popup.menuInflater
+//        popup.apply {
+//            setOnMenuItemClickListener(this@ItemDetailFragment)
+//            show()
+//        }
+//        inflater.inflate(R.menu.item_detail_menu, popup.menu)
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        kebabMenu?.let {
-            it.dismiss()
 
-            OneShotOnPreDrawListener(toolbar.kebabMenuButton) {
-                showKebabMenu(toolbar.kebabMenuButton)
-                false
+        PopupMenu(view.context, view).apply {
+            setOnMenuItemClickListener { item ->
+                when (item?.itemId) {
+
+                    R.id.edit -> {
+                        edit(item)
+                        true
+                    }
+                    R.id.delete -> {
+                        delete(item)
+                        true
+                    }
+                    else -> false
+                }
             }
+            inflate(R.menu.item_detail_menu)
+            show()
         }
+    }
+
+    override fun onDismiss(menu: PopupMenu?) {
+        menu?.dismiss()
+    }
+
+//    fun showMenu(v: View) {
+//        PopupMenu(context, v).apply {
+//            // MainActivity implements OnMenuItemClickListener
+//            inflate(R.menu.item_detail_menu)
+//        }
+//    }
+
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.edit -> {
+                edit(item)
+                true
+            }
+            R.id.delete -> {
+                delete(item)
+                true
+            }
+            else -> false
+        }
+    }
+
+    private fun edit(item: MenuItem) {
+        log.info("ELISE $item")
+    }
+
+    private fun delete(item: MenuItem) {
+        log.info("ELISE $item")
     }
 
     private fun updatePasswordVisibility(visible: Boolean) {
